@@ -1,0 +1,52 @@
+task wrapper(type: Wrapper) {
+  gradleVersion = '1.7'
+}
+
+subprojects {
+  // global
+  apply plugin: 'java'
+  apply plugin: 'eclipse-wtp'
+  sourceSets.main.java.srcDirs = ['src']
+  sourceSets.test.java.srcDirs = ['test']
+  group = 'whwhzzz'
+  tasks.withType(Compile) { options.encoding = 'UTF-8' }
+  def webServices = ''.tokenize()
+
+  // repos
+  repositories {
+    mavenCentral()
+    maven { url 'http://clojars.org/repo' }
+  }
+
+  // dependencies
+  configurations { provided }
+  eclipse.classpath.plusConfigurations += configurations.provided
+  sourceSets.main.compileClasspath += configurations.provided
+  sourceSets.main.runtimeClasspath += configurations.provided
+  def jetty = 'org.eclipse.jetty:jetty-webapp:8.1.14.v20131031'
+  dependencies {
+    if (project.name in webServices) { compile jetty }
+    if (project.name == 'PerformanceTest') {
+      compile 'org.apache.commons:commons-lang3:3.1'
+      compile 'commons-io:commons-io:2.4'
+      compile 'com.google.guava:guava:14.0.1'
+      provided jetty
+    } else {
+    }
+  }
+
+  // apps
+  if (project.name in 'PerformanceTest'.tokenize() ||
+      project.name in webServices) {
+    apply plugin: 'application'
+    mainClassName = 'whwhzzz.Main'
+    run { maxHeapSize '3G' }
+    if (project.name in webServices) {
+      run {
+        if (project.hasProperty('port')) {
+          args project.property('port')
+        }
+      }
+    }
+  }
+}
